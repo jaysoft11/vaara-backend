@@ -1,44 +1,35 @@
-import authRoutes from "./routes/auth.js";
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const morgan = require('morgan');
-const path = require('path');
-require('dotenv').config();
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const authRoutes = require('./routes/auth');
-const serviceRoutes = require('./routes/services');
-const inquiryRoutes = require('./routes/inquiries');
-const adminRoutes = require('./routes/admin');
+import servicesRouter from "./routes/services.js";
+import inquiriesRouter from "./routes/inquiries.js";
+import adminRouter from "./routes/admin.js";
+// ✅ remove require, use ESM style
+// import authRoutes from "./routes/auth.js"; // only if you actually created routes/auth.js
+
+dotenv.config();
 
 const app = express();
-
-app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/inquiries', inquiryRoutes);
-app.use('/api/admin', adminRoutes);
+// Routes
+app.use("/api/services", servicesRouter);
+app.use("/api/inquiries", inquiriesRouter);
+app.use("/api/admin", adminRouter);
+// app.use("/api/auth", authRoutes);  // only if needed
 
-// Fallback to index.html for root
-app.get('/', (_, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+// Static files
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "public")));
 
-const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/vaara_studio';
-
-mongoose.connect(MONGO_URI)
+const PORT = process.env.PORT || 10000;
+mongoose
+  .connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
   })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+  .catch(err => console.error("MongoDB error:", err));
